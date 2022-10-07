@@ -1,0 +1,16 @@
+{
+  "name": "test-jimp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jimp": "^0.16.2",
+    "jpeg-js": "^0.4.4",
+    "sharp": "^0.31.1"
+  }
+}
