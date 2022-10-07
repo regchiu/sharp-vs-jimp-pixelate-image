@@ -2,6 +2,7 @@ const jimp = require('jimp')
 const jpeg = require('jpeg-js')
 const sharp = require('sharp')
 const path = require('path')
+const axios = require('axios').default
 
 const regions = [
   { x: 975, y: 672, width: 918, height: 967 },
@@ -20,30 +21,38 @@ async function pixelateImageByJimp(imagePath) {
       image.pixelate(20, region.x, region.y, region.width, region.height)
     }
     image.write(
-      `./images/${path.basename(imagePath, '.jpeg')}-pixelated-by-jimp.jpg`
+      `./images/${path.basename(
+        imagePath,
+        path.extname(imagePath)
+      )}-pixelated-by-jimp.jpg`
     )
   } catch (error) {
     console.log(`${path.basename(imagePath)} error:\n`, error)
   }
 }
 
-async function pixelateImageBySharp(imagePath) {
+async function pixelateImageBySharp(imagePath, remote = false) {
+  let sharpInput = imagePath
+  if (remote) {
+    sharpInput = (await axios.get(imagePath, { responseType: 'arraybuffer' }))
+      .data
+  }
   try {
     const images = []
     for (const region of regions) {
       images.push({
         input: await sharp(
-          await sharp(imagePath)
+          await sharp(sharpInput)
             .extract({
               left: region.x,
               top: region.y,
               width: region.width,
               height: region.height,
             })
-            .resize(80, null, {
+            .resize(40, null, {
               kernel: sharp.kernel.nearest,
             })
-            .png()
+            .jpeg()
             .toBuffer()
         )
           .resize(region.width, null, {
@@ -55,11 +64,14 @@ async function pixelateImageBySharp(imagePath) {
         top: region.y,
       })
     }
-    await sharp(imagePath)
+    await sharp(sharpInput)
       .composite(images)
       .jpeg()
       .toFile(
-        `./images/${path.basename(imagePath, '.jpeg')}-pixelated-by-sharp.jpg`
+        `./images/${path.basename(
+          imagePath,
+          path.extname(imagePath)
+        )}-pixelated-by-sharp.jpg`
       )
   } catch (error) {
     console.log(`${path.basename(imagePath)} error:\n`, error)
@@ -68,6 +80,5 @@ async function pixelateImageBySharp(imagePath) {
 
 pixelateImageByJimp('./sample.jpeg')
 pixelateImageByJimp('./sample2.jpeg')
-
 pixelateImageBySharp('./sample.jpeg')
 pixelateImageBySharp('./sample2.jpeg')
